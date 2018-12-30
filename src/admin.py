@@ -1,4 +1,4 @@
-#后台管理部分
+# 后台管理部分
 import pymysql
 from Database import Database
 
@@ -30,14 +30,24 @@ def addactivity(infodict):  # add activity into the
     # End
     try:
         with connection.cursor() as cursor:
+            name = infodict["name"]
+            teacher = infodict["teacher"]
+            level = infodict["level"]
+            location = infodict["location"]
+            introduction = infodict["introduction"]
+            time = infodict["time"]
+            start_time = time[0]
+            end_time = time[1]
             # Create a new record
             # TODO add sql line in here
-            sql = "INSERT INTO `users` (`email`, `password`) VALUES (%s, %s)"
-            cursor.execute(sql, ('webmaster@python.org', 'very-secret'))
-
+            sql = "INSERT INTO `Activity` (`name`, `level`,`location`,`introduction`,`teacher`) VALUES (%s, %s,%s,%s,%s)"
+            cursor.execute(sql, (name, level, location, introduction, teacher))
+            connection.commit()
+            sql = "INSERT INTO "
+    except Exception as e:
         # !connection is not autocommit by default. So you must commit to save
         # your changes.
-        connection.commit()
+        print("Wrong", e)
     except Exception as e:
         print("Wrong", e)
     finally:
