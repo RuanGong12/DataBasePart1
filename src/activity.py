@@ -1,3 +1,4 @@
+# 处理活动相关问题
 import pymysql
 from Database import Database
 

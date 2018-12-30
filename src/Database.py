@@ -1,3 +1,4 @@
+#链接信息
 class Database:
     _host = "129.204.75.9"
     _port = 3306
