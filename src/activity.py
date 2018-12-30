@@ -13,7 +13,7 @@ _database = database.getdatabase()
 #! TODO setcomment
 
 
-def setcomment(user_id, act_id, message):  # ! id is user's id message: string
+def setcomment(auth_id, act_id, message):  # ! auth_id is user's id message: string
     connection = pymysql.connect(
         _host, _port, _sql_user, _sql_password, _sql_password)
     # End
@@ -21,8 +21,8 @@ def setcomment(user_id, act_id, message):  # ! id is user's id message: string
         with connection.cursor() as cursor:
             # Create a new record
             # TODO add sql line in here
-            sql = "INSERT INTO `users` (`email`, `password`) VALUES (%s, %s)"
-            cursor.execute(sql, ('webmaster@python.org', 'very-secret'))
+            sql = "INSERT INTO `Comments` (`message`, `auth_id`,`act_id`) VALUES (%s, %d, %d)"
+            cursor.execute(sql, (message, auth_id, act_id))
 
         # !connection is not autocommit by default. So you must commit to save
         # your changes.
