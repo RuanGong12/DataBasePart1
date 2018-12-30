@@ -55,7 +55,7 @@ def getcomment(id):  # ! this is act's id
         connection.close()
 
 
-def getactinfo(id):  # ! this is act's id BUG!!!!
+def getactinfo(id):
     connection = pymysql.connect(
         _host, _port, _sql_user, _sql_password, _sql_password)
     # End
@@ -67,12 +67,19 @@ def getactinfo(id):  # ! this is act's id BUG!!!!
             results = cursor.fetchall()
             for row in results:
                 name = row[0]
-                time = row[1]  # !bug!
+                time = row[1]
                 level = row[2]
                 location = row[3]
                 introduction = row[4]
                 teacher = row[5]
-            return {"name": name, "time": time, "level": level, "location": location, "introduction": introduction, "teacher": teacher}
+            sql = "SELECT time.start_time, time.end_time, time.`repeat` FROM time WHERE time.id = %d "
+            cursor.execute(sql, (time))
+            results = cursor.fetchall()
+            for row in results:
+                start_time = row[0]
+                end_time = row[1]
+                repect = row[2]
+            return {"name": name, "start_time": start_time, "end_time": end_time, "repeat": repect, "level": level, "location": location, "introduction": introduction, "teacher": teacher}
 
     except Exception as e:
         print("Wrong", e)
