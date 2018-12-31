@@ -1,5 +1,6 @@
 # avator是前端传来一个字符串，不用管是什么存数据库里就好
 import pymysql
+import time
 from Database import Database
 
 database = Database()
@@ -61,8 +62,9 @@ class DatabasePort(object):
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
-                sql = "INSERT INTO `Comments` (`message`, `auth_id`,`act_id`) VALUES (%s, %d, %d)"
-                cursor.execute(sql, (comment, userId, act_id))
+                localtime = time.asctime(time.localtime(time.time()))
+                sql = "INSERT INTO `Comments` (`message`, `auth_id`,`act_id`,`date`) VALUES (%s, %d, %d,%s)"
+                cursor.execute(sql, (comment, userId, act_id, localtime))
 
             # !connection is not autocommit by default. So you must commit to save
             # your changes.
@@ -74,7 +76,7 @@ class DatabasePort(object):
         finally:
             connection.close()
 
-    def add_rate(self, userId, id, rate):  # userId的用户评分id的课程，分数为rate(0-5)  成功返回0失败返回1
+    def add_rate(self, userId, id, rate):  # ! userId的用户评分id的课程，分数为rate(0-5)  成功返回0失败返回1
         connection = pymysql.connect(
             _host, _port, _sql_user, _sql_password, _sql_password)
         try:
@@ -95,8 +97,34 @@ class DatabasePort(object):
         finally:
             connection.close()
 
-    def courselike(self, userId, id):  # 收藏功能  改变状态，即没收藏变为收藏，收藏变为取消收藏
-        pass
+    def courselike(self, userId, id):  # ! 收藏功能  改变状态，即没收藏变为收藏，收藏变为取消收藏
+        connection = pymysql.connect(
+            _host, _port, _sql_user, _sql_password, _sql_password)
+        try:
+            with connection.cursor() as cursor:
+                # Create a new record
+                # TODO add sql line in here
+                sql = "SELECT Collection.id FROM Collection WHERE Collection.user_id = %d AND Collection.activity_id = %d"
+                cursor.execute(sql, (userId, id))
+                # cursor.execute(sql, (message, userID, act_id))
+                resualts = cursor.fetchall()
+                if resualts != None:
+                    for row in resualts:
+                        Collection_id = row[0]
+                    sql = "DELETE FROM Collection WHERE id = %d;"
+                    cursor.execute(sql, (Collection_id))
+                else:
+                    sql = "INSERT INTO `Collection` (`user_id`, `activity_id`) VALUES (%d, %d)"
+                    cursor.execute(sql, (userId, id))
+            # !connection is not autocommit by default. So you must commit to save
+            # your changes.
+            connection.commit()
+            return 0
+        except Exception as e:
+            print("Wrong", e)
+            return 1
+        finally:
+            connection.close()
 
     def ask_course(self, userId, id):  # userId询问id课程相关信息，返回格式示例为：
         connection = pymysql.connect(
