@@ -154,7 +154,7 @@ class DatabasePort(object):
                     start_time = row[0]
                     end_time = row[1]
                 timeLocation = [start_time, end_time]
-                return {"id": id, "title": name, "school": school, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": level, "isLike": 1, "hasRated": 0, "description": [introduction]}
+                return {"id": id, "title": name, "school": school,"location":location, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": level, "isLike": 1, "hasRated": 0, "description": [introduction]}
 
         except Exception as e:
             print("Wrong", e)
