@@ -15,14 +15,14 @@ _database = database.getdatabase()
 class DatabasePort(object):
     def signup(self, name, password, avator):  # 注册账号，成功返回账号id，不成功返回-1
         connection = pymysql.connect(
-            _host, _port, _sql_user, _sql_password, _sql_password)
+            db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
                 sql1 = "INSERT INTO `Auth` (`login_name`,`password`)  VALUES (%s, %s)"
                 cursor.execute(sql1, (name, password))
-                sql2 = "INSERT INTO `User` (`user_name`, `avatar`) VALUES (%s, %s)"
+                sql2 = "INSERT INTO `User` (`user_name`, `avator`) VALUES (%s, %s)"
                 cursor.execute(sql2, (name, avator))
 
             # !connection is not autocommit by default. So you must commit to save
@@ -36,7 +36,7 @@ class DatabasePort(object):
 
     def login(self, userId, password):  # 登录，成功返回1，账号或密码错误返回0
         connection = pymysql.connect(
-            _host, _port, _sql_user, _sql_password, _sql_password)
+            db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         # End
         try:
             with connection.cursor() as cursor:
@@ -57,7 +57,7 @@ class DatabasePort(object):
     # userId的用户评论id的课程，内容为comment  成功返回0失败返回1
     def add_comment(self, userId, act_id, comment):
         connection = pymysql.connect(
-            _host, _port, _sql_user, _sql_password, _sql_password)
+            db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
             with connection.cursor() as cursor:
                 # Create a new record
@@ -78,7 +78,7 @@ class DatabasePort(object):
 
     def add_rate(self, userId, id, rate):  # ! userId的用户评分id的课程，分数为rate(0-5)  成功返回0失败返回1
         connection = pymysql.connect(
-            _host, _port, _sql_user, _sql_password, _sql_password)
+            db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
             with connection.cursor() as cursor:
                 # Create a new record
@@ -99,7 +99,7 @@ class DatabasePort(object):
 
     def courselike(self, userId, id):  # ! 收藏功能  改变状态，即没收藏变为收藏，收藏变为取消收藏
         connection = pymysql.connect(
-            _host, _port, _sql_user, _sql_password, _sql_password)
+            db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
             with connection.cursor() as cursor:
                 # Create a new record
@@ -128,7 +128,7 @@ class DatabasePort(object):
 
     def ask_course(self, userId, id):  # userId询问id课程相关信息，返回格式示例为：
         connection = pymysql.connect(
-            _host, _port, _sql_user, _sql_password, _sql_password)
+            db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         # End
         try:
             with connection.cursor() as cursor:
@@ -154,7 +154,7 @@ class DatabasePort(object):
                     start_time = row[0]
                     end_time = row[1]
                 timeLocation = [start_time, end_time]
-                return {"id": id, "title": name, "school": school,"location":location, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": level, "isLike": 1, "hasRated": 0, "description": [introduction]}
+                return {"id": id, "title": name, "school": school, "location": location, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": level, "isLike": 1, "hasRated": 0, "description": [introduction]}
 
         except Exception as e:
             print("Wrong", e)
@@ -177,7 +177,7 @@ class DatabasePort(object):
 
     def ask_comment(self, id):  # 查询id课程的评论  返回格式示例为：
         connection = pymysql.connect(
-            _host, _port, _sql_user, _sql_password, _sql_password)
+            db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         # End
         try:
             with connection.cursor() as cursor:
@@ -216,7 +216,7 @@ class DatabasePort(object):
 
     def userinf(self, userId):  # 查询用户相关信息  返回格式为
         connection = pymysql.connect(
-            _host, _port, _sql_user, _sql_password, _sql_password)
+            db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         # End
         try:
             with connection.cursor() as cursor:
@@ -227,7 +227,7 @@ class DatabasePort(object):
                 for row in results:
                     user_id = row[0]
                     user_name = row[1]
-                    avatar = row[2]
+                    avator = row[2]
                     like = row[3]
                 like = []
                 sql = "SELECT Collection.activity_id FROM Collection WHERE Collection.activity_id = %d"
@@ -235,7 +235,7 @@ class DatabasePort(object):
                 results = cursor.fetchall()
                 for row in results:
                     like.append(row[0])
-                return {"id": user_id, "name": user_name, "avatar": avatar, "like": like}
+                return {"id": user_id, "name": user_name, "avator": avator, "like": like}
 
         except Exception as e:
             connection.close()
