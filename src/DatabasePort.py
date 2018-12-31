@@ -137,25 +137,30 @@ class DatabasePort(object):
                 # TODO their must a bug because time problem
                 results = cursor.fetchall()
                 for row in results:
-                    name = row[0]
-                    time = row[1]
-                    level = row[2]
-                    location = row[3]
-                    introduction = row[4]
-                    teacher = row[5]
+                    name = row[1]
+                    time = row[2]
+                    level = row[3]
+                    location = row[4]
+                    introduction = row[5]
+                    teacher = row[6]
+                    school = row[7]
+                    cover = row[8]
+                    tags = row[9]
+
                 sql = "SELECT time.start_time, time.end_time, time.`repeat` FROM time WHERE time.id = %d "
                 cursor.execute(sql, (time))
                 results = cursor.fetchall()
                 for row in results:
                     start_time = row[0]
                     end_time = row[1]
-                    repect = row[2]
-                return {"name": name, "start_time": start_time, "end_time": end_time, "repeat": repect, "level": level, "location": location, "introduction": introduction, "teacher": teacher}
+                timeLocation = [start_time, end_time]
+                return {"id": id, "title": name, "school": school, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": level, "isLike": 1, "hasRated": 0, "description": [introduction]}
 
         except Exception as e:
             print("Wrong", e)
         finally:
             connection.close()
+            # 这里我想加入location
             # return {
             #     "id" : "0232",
             #     "title": "神奇的材料世界",
