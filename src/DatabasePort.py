@@ -10,7 +10,7 @@ _database = "DataSQL"
 
 
 class DatabasePort(object):
-    def signup(self, name, password, avator):  # 注册账号，成功返回账号id，不成功返回-1
+    def signup(self, name, password, avator):  # * OK 注册账号，成功返回账号id，不成功返回-1
         connection = pymysql.connect(
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
@@ -19,29 +19,25 @@ class DatabasePort(object):
                 # TODO add sql line in here
                 sql = "INSERT INTO `User` (`user_name`,`password`,`avator`)  VALUES (%s, %s,%s)"
                 cursor.execute(sql, (name, password, avator))
-
-            # !connection is not autocommit by default. So you must commit to save
-            # your changes.
-            connection.commit()
-            sql = "SELECT User.`id` FROM `User` WHERE User.`user_name` = %s AND User.`password` = %s"
-            cursor.execute(sql, (name, password))
-            result = cursor.fetchone()
-            return result
-
+                connection.commit()
+                sql = "SELECT User.`id` FROM `User` WHERE User.`user_name` = %s AND User.`password` = %s"
+                cursor.execute(sql, (name, password))
+                result = cursor.fetchone()
+                return result[0]
         except Exception as e:
             print("Wrong", e)
             return -1
         finally:
             connection.close()
 
-    def login(self, userId, password):  # 登录，成功返回1，账号或密码错误返回0
+    def login(self, userId, password):  # *Ok 登录，成功返回1，账号或密码错误返回0
         connection = pymysql.connect(
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         # End
         try:
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT User.`id` FROM User WHERE User.`id` = %d AND User.`password` = %s"
+                sql = "SELECT User.`id` FROM User WHERE User.`id` = %s AND User.`password` = %s"
                 cursor.execute(sql, (userId, password))
                 result = cursor.fetchone()
                 if result != None:
@@ -56,7 +52,7 @@ class DatabasePort(object):
             connection.close()
 
     # userId的用户评论id的课程，内容为comment  成功返回0失败返回1
-    def add_comment(self, userId, act_id, comment):
+    def add_comment(self, userId, act_id, comment):  # *OK
         connection = pymysql.connect(
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
@@ -64,7 +60,7 @@ class DatabasePort(object):
                 # Create a new record
                 # TODO add sql line in here
                 localtime = time.asctime(time.localtime(time.time()))
-                sql = "INSERT INTO `Comments` (`message`, `auth_id`,`act_id`,`date`) VALUES (%s, %d, %d,%s)"
+                sql = "INSERT INTO `Comments` (`message`, `auth_id`,`act_id`,`date`) VALUES (%s, %s, %s,%s)"
                 cursor.execute(sql, (comment, userId, act_id, localtime))
 
             # !connection is not autocommit by default. So you must commit to save
@@ -77,14 +73,14 @@ class DatabasePort(object):
         finally:
             connection.close()
 
-    def add_rate(self, userId, id, rate):  # ! userId的用户评分id的课程，分数为rate(0-5)  成功返回0失败返回1
+    def add_rate(self, userId, id, rate):  # *OK userId的用户评分id的课程，分数为rate(0-5)  成功返回0失败返回1
         connection = pymysql.connect(
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
-                sql = "UPDATE Collection SET rate = %d WHERE Collection.`user_id` = %d AND Collection.`activity_id` = %d"
+                sql = "UPDATE Collection SET rate = %s WHERE Collection.`user_id` = %s AND Collection.`activity_id` = %s"
                 cursor.execute(sql, (rate, userId, id))
                 # cursor.execute(sql, (message, userID, act_id))
 
@@ -105,17 +101,17 @@ class DatabasePort(object):
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
-                sql = "SELECT Collection.id FROM Collection WHERE Collection.user_id = %d AND Collection.activity_id = %d"
+                sql = "SELECT Collection.id FROM Collection WHERE Collection.user_id = %s AND Collection.activity_id = %s"
                 cursor.execute(sql, (userId, id))
                 # cursor.execute(sql, (message, userID, act_id))
                 resualts = cursor.fetchall()
                 if resualts != None:
                     for row in resualts:
                         Collection_id = row[0]
-                    sql = "DELETE FROM Collection WHERE id = %d;"
+                    sql = "DELETE FROM Collection WHERE id = %s"
                     cursor.execute(sql, (Collection_id))
                 else:
-                    sql = "INSERT INTO `Collection` (`user_id`, `activity_id`) VALUES (%d, %d)"
+                    sql = "INSERT INTO `Collection` (`user_id`, `activity_id`) VALUES (%s, %s)"
                     cursor.execute(sql, (userId, id))
             # !connection is not autocommit by default. So you must commit to save
             # your changes.
@@ -133,7 +129,7 @@ class DatabasePort(object):
         # End
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM Activity WHERE Activity.`id`=%d"
+                sql = "SELECT * FROM Activity WHERE Activity.`id`=%s"
                 cursor.execute(sql, (id))
                 # TODO their must a bug because time problem
                 results = cursor.fetchall()
@@ -148,14 +144,14 @@ class DatabasePort(object):
                     cover = row[8]
                     tags = row[9]
 
-                sql = "SELECT time.`start_time`, time.`end_time`, time.`repeat` FROM time WHERE time.id = %d "
+                sql = "SELECT time.`start_time`, time.`end_time`, time.`repeat` FROM time WHERE time.id = %s"
                 cursor.execute(sql, (time))
                 results = cursor.fetchall()
                 for row in results:
                     start_time = row[0]
                     end_time = row[1]
                 timeLocation = [start_time, end_time]
-                sql = "SELECT rate FROM Collection WHERE user_id = %d AND activity_id = %d"
+                sql = "SELECT rate FROM Collection WHERE user_id = %s AND activity_id = %s"
                 cursor.execute(sql, (userId, id))
                 rate = cursor.fetchone()
                 if rate != None:
@@ -164,7 +160,7 @@ class DatabasePort(object):
                 else:
                     rate = 0
                     isRated = 0
-                sql = "SELECT id FROM Collection WHERE user_id = %d AND activity_id = %d"
+                sql = "SELECT id FROM Collection WHERE user_id = %s AND activity_id = %s"
                 cursor.execute(sql, (userId, id))
                 results = cursor.fetchone()
                 if results == None:
@@ -177,7 +173,7 @@ class DatabasePort(object):
         except Exception as e:
             print("Wrong", e)
         finally:
-            connection.close()`10ohht `
+            connection.close()
             # 这里我想加入location
             # return {
             #     "id" : "0232",
@@ -200,7 +196,7 @@ class DatabasePort(object):
         try:
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT `*` FROM `Comments` WHERE `Comments.act_id` = %d"
+                sql = "SELECT `*` FROM `Comments` WHERE `Comments.act_id` = %s"
                 cursor.execute(sql, (id))
                 results = cursor.fetchall()
                 for row in results:
@@ -208,7 +204,7 @@ class DatabasePort(object):
                     auth_id = row[2]
                     date = row[4]
                 # TODO return user_id
-                sql = "SELECT `User`.user_name FROM `User` WHERE `User`.id = %d"
+                sql = "SELECT `User`.user_name FROM `User` WHERE `User`.id = %s"
                 cursor.execute(sql, (id))
                 results = cursor.fetchall()
                 for row in results:
@@ -239,7 +235,7 @@ class DatabasePort(object):
         try:
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT `*` FROM `User` WHERE `User`.id = %d"
+                sql = "SELECT `*` FROM `User` WHERE `User`.id = %s"
                 cursor.execute(sql, (userId))
                 results = cursor.fetchall()
                 for row in results:
@@ -248,7 +244,7 @@ class DatabasePort(object):
                     avator = row[2]
                     like = row[3]
                 like = []
-                sql = "SELECT Collection.activity_id FROM Collection WHERE Collection.activity_id = %d"
+                sql = "SELECT Collection.activity_id FROM Collection WHERE Collection.activity_id = %s"
                 cursor.execute(sql, (userId))
                 results = cursor.fetchall()
                 for row in results:
