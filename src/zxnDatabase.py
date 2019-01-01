@@ -74,18 +74,19 @@ class DatabasePort(object):
         finally:
             connection.close()
 
-    def add_rate(self, userId, id, rate):  # !bug userId的用户评分id的课程，分数为rate(0-5)  成功返回0失败返回1
+    def add_rate(self, userId, id, rate):  # userId的用户评分id的课程，分数为rate(0-5)  成功返回0失败返回1
         connection = pymysql.connect(
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
             with connection.cursor() as cursor:
                 # Create a new record
+                if rate > 5 or rate < 0:
+                    print("Wrong rate number")
+                    return 1
                 # TODO add sql line in here
                 sql = "UPDATE Collection SET rate = %s WHERE Collection.`user_id` = %s AND Collection.`activity_id` = %s"
                 cursor.execute(sql, (rate, userId, id))
                 # cursor.execute(sql, (message, userID, act_id))
-
-            # !connection is not autocommit by default. So you must commit to save
             # your changes.
             connection.commit()
             return 0
@@ -95,7 +96,7 @@ class DatabasePort(object):
         finally:
             connection.close()
 
-    def courselike(self, userId, id):  # 收藏功能  改变状态，即没收藏变为收藏，收藏变为取消收藏
+    def courselike(self, userId, id):  # *Ok 收藏功能  改变状态，即没收藏变为收藏，收藏变为取消收藏
         connection = pymysql.connect(
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
@@ -106,13 +107,13 @@ class DatabasePort(object):
                 cursor.execute(sql, (userId, id))
                 # cursor.execute(sql, (message, userID, act_id))
                 resualts = cursor.fetchall()
-                if resualts != None:
+                if len(resualts) != 0:
                     for row in resualts:
                         Collection_id = row[0]
                     sql = "DELETE FROM Collection WHERE id = %s"
                     cursor.execute(sql, (Collection_id))
                 else:
-                    sql = "INSERT INTO `Collection` (`user_id`, `activity_id`) VALUES (%s, %s)"
+                    sql = "INSERT INTO Collection (`user_id`, `activity_id`) VALUES (%s, %s)"
                     cursor.execute(sql, (userId, id))
             # !connection is not autocommit by default. So you must commit to save
             # your changes.
@@ -136,22 +137,24 @@ class DatabasePort(object):
                 results = cursor.fetchall()
                 for row in results:
                     name = row[1]
-                    time = row[2]
+                    # time = row[2]
                     # level = row[3]
-                    location = row[4]
+                    # location = row[4]
                     introduction = row[5]
                     teacher = row[6]
                     school = row[7]
                     cover = row[8]
                     tags = row[9]
-
-                sql = "SELECT time.`start_time`, time.`end_time`, time.`repeat` FROM time WHERE time.id = %s"
-                cursor.execute(sql, (time))
-                results = cursor.fetchall()
-                for row in results:
-                    start_time = row[0]
-                    end_time = row[1]
-                timeLocation = [start_time, end_time]
+                    date = row[10]
+                    # type = row[11]
+                # sql = "SELECT time.`start_time`, time.`end_time`, time.`repeat` FROM time WHERE time.id = %s"
+                # cursor.execute(sql, (time))
+                # results = cursor.fetchall()
+                # for row in results:
+                #     start_time = row[0]
+                #     end_time = row[1]
+                # timeLocation = [start_time, end_time]
+                timeLocation = str(date)
                 sql = "SELECT rate FROM Collection WHERE user_id = %s AND activity_id = %s"
                 cursor.execute(sql, (userId, id))
                 rate = cursor.fetchone()
@@ -169,7 +172,7 @@ class DatabasePort(object):
                 else:
                     isLiked = 1
 
-                return {"id": id, "title": name, "school": school, "location": location, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": rate, "isLike": isLiked, "hasRated": isRated, "description": [introduction]}
+                return {"id": id, "title": name, "school": school, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": rate, "isLike": isLiked, "hasRated": isRated, "description": [introduction]}
 
         except Exception as e:
             print("Wrong", e)
@@ -190,27 +193,35 @@ class DatabasePort(object):
             #     "description": ["形形色色的材料构成了丰富多彩的物质世界，为我们创造了美好的生活,推进了人类文明的发展，影响和改变了我们的生活。玻璃、陶瓷、金属和塑料…….这些神奇物质是如何改变我们的世界？新材料的出现会给我们带来哪些惊喜？想知道背后精彩的科学故事和相关科学原理吗？让我们一起走进神奇的材料世界。"]
             # }
 
-    def ask_comment(self, id):  # 查询id课程的评论  返回格式示例为：
+    def ask_comment(self, id):  # *Ok 查询id课程的评论  返回格式示例为：
         connection = pymysql.connect(
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         # End
         try:
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT `*` FROM `Comments` WHERE `Comments.act_id` = %s"
+                sql = "SELECT * FROM Comments WHERE Comments.`act_id` = %s"
                 cursor.execute(sql, (id))
                 results = cursor.fetchall()
+                ans = []
                 for row in results:
                     message = row[1]
                     auth_id = row[2]
                     date = row[4]
+                    sql = "SELECT User.`user_name` FROM User WHERE User.`id` = %s"
+                    cursor.execute(sql, (id))
+                    results = cursor.fetchall()
+                    for row in results:
+                        user_name = row[0]
+                    ans.append({"id": auth_id, "userName": user_name,
+                                "date": date, "content": message})
                 # TODO return user_id
-                sql = "SELECT `User`.user_name FROM `User` WHERE `User`.id = %s"
-                cursor.execute(sql, (id))
-                results = cursor.fetchall()
-                for row in results:
-                    user_name = row[0]
-                return {"id": auth_id, "userName": user_name, "date": date, "content": message}
+                # sql = "SELECT `User`.user_name FROM `User` WHERE `User`.id = %s"
+                # cursor.execute(sql, (id))
+                # results = cursor.fetchall()
+                # for row in results:
+                #     user_name = row[0]
+                return ans
         except Exception as e:
             print("Wrong", e)
         finally:
@@ -229,7 +240,7 @@ class DatabasePort(object):
         # }
         # ]
 
-    def userinf(self, userId):  # 查询用户相关信息  返回格式为
+    def userinf(self, userId):  # *OK 查询用户相关信息  返回格式为
         connection = pymysql.connect(
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         # End

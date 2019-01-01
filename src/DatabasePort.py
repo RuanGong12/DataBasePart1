@@ -79,6 +79,9 @@ class DatabasePort(object):
             db=_database, user=_sql_user, passwd=_sql_password, host=_host, port=_port)
         try:
             with connection.cursor() as cursor:
+                if rate > 5 or rate < 0:
+                    print("Wrong rate")
+                    return 1
                 # Create a new record
                 # TODO add sql line in here
                 sql = "UPDATE Collection SET rate = %s WHERE Collection.`user_id` = %s AND Collection.`activity_id` = %s"
