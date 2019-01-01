@@ -23,6 +23,11 @@ class DatabasePort(object):
             # !connection is not autocommit by default. So you must commit to save
             # your changes.
             connection.commit()
+            sql = "SELECT User.`id` FROM `User` WHERE User.`user_name` = %s AND User.`password` = %s"
+            cursor.execute(sql, (name, password))
+            result = cursor.fetchone()
+            return result
+
         except Exception as e:
             print("Wrong", e)
             return -1
@@ -36,12 +41,11 @@ class DatabasePort(object):
         try:
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT User.`id` FROM `User` WHERE User.`id` = %d AND User.`password` = %s"
+                sql = "SELECT User.`id` FROM User WHERE User.`id` = %d AND User.`password` = %s"
                 cursor.execute(sql, (userId, password))
                 result = cursor.fetchone()
                 if result != None:
                     return 1
-                # TODO return user_id
 
         except Exception as e:
             print("Wrong", e)
@@ -78,7 +82,7 @@ class DatabasePort(object):
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
-                sql = "UPDATE Collection SET rate = %d WHERE Collection.`user_id` = %d AND Collection.`act_id` = %d"
+                sql = "UPDATE Collection SET rate = %d WHERE Collection.`user_id` = %d AND Collection.`activity_id` = %d"
                 cursor.execute(sql, (rate, userId, id))
                 # cursor.execute(sql, (message, userID, act_id))
 
@@ -127,14 +131,14 @@ class DatabasePort(object):
         # End
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT `*` FROM `Activity` WHERE `Activity.id`=%d"
+                sql = "SELECT * FROM Activity WHERE Activity.`id`=%d"
                 cursor.execute(sql, (id))
                 # TODO their must a bug because time problem
                 results = cursor.fetchall()
                 for row in results:
                     name = row[1]
                     time = row[2]
-                    level = row[3]
+                    # level = row[3]
                     location = row[4]
                     introduction = row[5]
                     teacher = row[6]
@@ -142,14 +146,31 @@ class DatabasePort(object):
                     cover = row[8]
                     tags = row[9]
 
-                sql = "SELECT time.start_time, time.end_time, time.`repeat` FROM time WHERE time.id = %d "
+                sql = "SELECT time.`start_time`, time.`end_time`, time.`repeat` FROM time WHERE time.id = %d "
                 cursor.execute(sql, (time))
                 results = cursor.fetchall()
                 for row in results:
                     start_time = row[0]
                     end_time = row[1]
                 timeLocation = [start_time, end_time]
-                return {"id": id, "title": name, "school": school, "location": location, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": level, "isLike": 1, "hasRated": 0, "description": [introduction]}
+                sql = "SELECT rate FROM Collection WHERE user_id = %d AND activity_id = %d"
+                cursor.execute(sql, (userId, id))
+                rate = cursor.fetchone()
+                if rate != None:
+                    rate = rate
+                    isRated = 1
+                else:
+                    rate = 0
+                    isRated = 0
+                sql = "SELECT id FROM Collection WHERE user_id = %d AND activity_id = %d"
+                cursor.execute(sql, (userId, id))
+                results = cursor.fetchone()
+                if results == None:
+                    isLiked = 0
+                else:
+                    isLiked = 1
+
+                return {"id": id, "title": name, "school": school, "location": location, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": rate, "isLike": isLiked, "hasRated": isRated, "description": [introduction]}
 
         except Exception as e:
             print("Wrong", e)
