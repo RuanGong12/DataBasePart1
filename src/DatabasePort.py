@@ -1,15 +1,12 @@
 # avator是前端传来一个字符串，不用管是什么存数据库里就好
 import pymysql
 import time
-from Database import Database
 
-database = Database()
-
-_host = database.gethost()
-_port = database.getport()
-_sql_user = database.getuser()
-_sql_password = database.getpassword()
-_database = database.getdatabase()
+_host = "129.204.75.9"
+_port = 3306
+_sql_user = "root"
+_sql_password = "mysql123456"
+_database = "DataSQL"
 
 
 class DatabasePort(object):
@@ -20,10 +17,8 @@ class DatabasePort(object):
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
-                sql1 = "INSERT INTO `Auth` (`login_name`,`password`)  VALUES (%s, %s)"
-                cursor.execute(sql1, (name, password))
-                sql2 = "INSERT INTO `User` (`user_name`, `avator`) VALUES (%s, %s)"
-                cursor.execute(sql2, (name, avator))
+                sql = "INSERT INTO `User` (`user_name`,`password`,`avator`)  VALUES (%s, %s,%s)"
+                cursor.execute(sql, (name, password, avator))
 
             # !connection is not autocommit by default. So you must commit to save
             # your changes.
@@ -41,7 +36,7 @@ class DatabasePort(object):
         try:
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT Auth.`user_id` FROM `Auth` WHERE `Auth.user_id` = %d AND Auth.`password` = %s"
+                sql = "SELECT User.`id` FROM `User` WHERE User.`id` = %d AND User.`password` = %s"
                 cursor.execute(sql, (userId, password))
                 result = cursor.fetchone()
                 if result != None:
@@ -83,8 +78,8 @@ class DatabasePort(object):
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
-                sql = "UPDATE  SET field1=new-value1, field2=new-value2"
-                cursor.execute(sql, (id))
+                sql = "UPDATE Collection SET rate = %d WHERE Collection.`user_id` = %d AND Collection.`act_id` = %d"
+                cursor.execute(sql, (rate, userId, id))
                 # cursor.execute(sql, (message, userID, act_id))
 
             # !connection is not autocommit by default. So you must commit to save
