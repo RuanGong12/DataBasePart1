@@ -46,6 +46,8 @@ class DatabasePort(object):
                 result = cursor.fetchone()
                 if result != None:
                     return 1
+                else:
+                    return 0
 
         except Exception as e:
             print("Wrong", e)
@@ -175,7 +177,7 @@ class DatabasePort(object):
         except Exception as e:
             print("Wrong", e)
         finally:
-            connection.close()
+            connection.close()`10ohht `
             # 这里我想加入location
             # return {
             #     "id" : "0232",
