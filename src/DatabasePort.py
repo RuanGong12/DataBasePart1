@@ -315,24 +315,25 @@ class DatabasePort(object):
     def classify(self, classifyargs):
         '''
         classifyargs类型为classifyArgs，用于传分类的参数，各个参数为字符串，传递分类的标准，不需要某类分类则置None。
+        classifyArgs类记得检查是否import了，这是自己定义的数据结构
         '''
         sql = "select * from Activity where"
         first = True
         
-        # if classifyargs.campus != None:
-        #     if not first:
-        #         sql+=" and"
-        #     sql += ' campus=' + classifyargs.campus
-        # elif classifyargs.time != None:
-        #     if not first:
-        #         sql+=" and"
-        #     sql += ' time=' + classifyargs.time
-        # elif classifyargs.college != None:
-        #     if not first:
-        #         sql+=" and"
-        #     sql += ' college=' + classifyargs.college
+        if classifyargs.school != None:
+            if not first:
+                sql+=" and"
+            sql += ' school=' + classifyargs.school
+        elif classifyargs.time != None:
+            if not first:
+                sql+=" and"
+            sql += ' time=' + classifyargs.time
+        elif classifyargs.level != None:
+            if not first:
+                sql+=" and"
+            sql += ' level=' + classifyargs.level
 
-        connection = pymysql.connect(host='129.204.75.9', user='root', password='mysql123456', db='cousrse', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+        connection = pymysql.connect(host=_host, user=_sql_user, password=_sql_password, db=_database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor,port=_port)
 
         try:
             with connection.cursor() as cursor:
@@ -346,4 +347,5 @@ class DatabasePort(object):
 class classifyArgs():
     # campus = None
     time = None
-    # college = None
+    school = None
+    level=None
