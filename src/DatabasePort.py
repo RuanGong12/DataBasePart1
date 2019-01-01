@@ -2,15 +2,12 @@
 import pymysql
 import synonyms
 import time
-from Database import Database
 
-database = Database()
-
-_host = database.gethost()
-_port = database.getport()
-_sql_user = database.getuser()
-_sql_password = database.getpassword()
-_database = database.getdatabase()
+_host = "129.204.75.9"
+_port = 3306
+_sql_user = "root"
+_sql_password = "mysql123456"
+_database = "DataSQL"
 
 
 class DatabasePort(object):
@@ -21,14 +18,17 @@ class DatabasePort(object):
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
-                sql1 = "INSERT INTO `Auth` (`login_name`,`password`)  VALUES (%s, %s)"
-                cursor.execute(sql1, (name, password))
-                sql2 = "INSERT INTO `User` (`user_name`, `avator`) VALUES (%s, %s)"
-                cursor.execute(sql2, (name, avator))
+                sql = "INSERT INTO `User` (`user_name`,`password`,`avator`)  VALUES (%s, %s,%s)"
+                cursor.execute(sql, (name, password, avator))
 
             # !connection is not autocommit by default. So you must commit to save
             # your changes.
             connection.commit()
+            sql = "SELECT User.`id` FROM `User` WHERE User.`user_name` = %s AND User.`password` = %s"
+            cursor.execute(sql, (name, password))
+            result = cursor.fetchone()
+            return result
+
         except Exception as e:
             print("Wrong", e)
             return -1
@@ -42,12 +42,13 @@ class DatabasePort(object):
         try:
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT Auth.`user_id` FROM `Auth` WHERE `Auth.user_id` = %d AND Auth.`password` = %s"
+                sql = "SELECT User.`id` FROM User WHERE User.`id` = %d AND User.`password` = %s"
                 cursor.execute(sql, (userId, password))
                 result = cursor.fetchone()
                 if result != None:
                     return 1
-                # TODO return user_id
+                else:
+                    return 0
 
         except Exception as e:
             print("Wrong", e)
@@ -84,8 +85,8 @@ class DatabasePort(object):
             with connection.cursor() as cursor:
                 # Create a new record
                 # TODO add sql line in here
-                sql = "UPDATE  SET field1=new-value1, field2=new-value2"
-                cursor.execute(sql, (id))
+                sql = "UPDATE Collection SET rate = %d WHERE Collection.`user_id` = %d AND Collection.`activity_id` = %d"
+                cursor.execute(sql, (rate, userId, id))
                 # cursor.execute(sql, (message, userID, act_id))
 
             # !connection is not autocommit by default. So you must commit to save
@@ -133,14 +134,14 @@ class DatabasePort(object):
         # End
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT `*` FROM `Activity` WHERE `Activity.id`=%d"
+                sql = "SELECT * FROM Activity WHERE Activity.`id`=%d"
                 cursor.execute(sql, (id))
                 # TODO their must a bug because time problem
                 results = cursor.fetchall()
                 for row in results:
                     name = row[1]
                     time = row[2]
-                    level = row[3]
+                    # level = row[3]
                     location = row[4]
                     introduction = row[5]
                     teacher = row[6]
@@ -148,19 +149,36 @@ class DatabasePort(object):
                     cover = row[8]
                     tags = row[9]
 
-                sql = "SELECT time.start_time, time.end_time, time.`repeat` FROM time WHERE time.id = %d "
+                sql = "SELECT time.`start_time`, time.`end_time`, time.`repeat` FROM time WHERE time.id = %d "
                 cursor.execute(sql, (time))
                 results = cursor.fetchall()
                 for row in results:
                     start_time = row[0]
                     end_time = row[1]
                 timeLocation = [start_time, end_time]
-                return {"id": id, "title": name, "school": school, "location": location, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": level, "isLike": 1, "hasRated": 0, "description": [introduction]}
+                sql = "SELECT rate FROM Collection WHERE user_id = %d AND activity_id = %d"
+                cursor.execute(sql, (userId, id))
+                rate = cursor.fetchone()
+                if rate != None:
+                    rate = rate
+                    isRated = 1
+                else:
+                    rate = 0
+                    isRated = 0
+                sql = "SELECT id FROM Collection WHERE user_id = %d AND activity_id = %d"
+                cursor.execute(sql, (userId, id))
+                results = cursor.fetchone()
+                if results == None:
+                    isLiked = 0
+                else:
+                    isLiked = 1
+
+                return {"id": id, "title": name, "school": school, "location": location, "teacher": teacher, "cover": cover, "timeLocation": timeLocation, "tags": tags, "rate": rate, "isLike": isLiked, "hasRated": isRated, "description": [introduction]}
 
         except Exception as e:
             print("Wrong", e)
         finally:
-            connection.close()
+            connection.close()`10ohht `
             # 这里我想加入location
             # return {
             #     "id" : "0232",
