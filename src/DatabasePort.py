@@ -1,5 +1,6 @@
 # avator是前端传来一个字符串，不用管是什么存数据库里就好
 import pymysql
+import synonyms
 import time
 from Database import Database
 
@@ -248,3 +249,101 @@ class DatabasePort(object):
             #     "avatar": "/static/img/user_head_img.png",
             #     "like": ["233333", "66666"]  # (收藏的课程id)
             # }
+
+    def search(self,keywords, fuzzy):
+        '''
+        keywords为字符串，包含若干关键词，以空格分隔；
+        fuzzy为bool，代表是否进行模糊搜索
+        '''
+        keywordslist = keywords.split()
+        pastlen = len(keywordslist)
+        if (fuzzy):
+            for i in range(pastlen):
+                keywordslist += synonyms.nearby(keywordslist[i])[0][1:4]
+        
+        connection = pymysql.connect(host=_host, user=_sql_user, password=_sql_password, db=_database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor,port=_port)
+
+        results=[]
+        indexs=set()
+        try:
+            with connection.cursor() as cursor:
+                for i in range(pastlen):
+                    sql = "select * from course where name=%s or teacher=%s"
+                    cursor.execute(sql, (keywordslist[i], keywordslist[i]))
+                    result = cursor.fetchall()
+                    for one in result:
+                        # results[one['id']]=one
+                        if one['id'] not in indexs:
+                            # 新的，去重
+                            indexs.add(one['id'])
+                            results.append(one)
+                for i in range(pastlen):
+                    sql = "select * from course where intro like '%"+keywordslist[i]+"%'"
+                    cursor.execute(sql)
+                    result = cursor.fetchall()
+                    for one in result:
+                        # results[one['id']]=one
+                        if one['id'] not in indexs:
+                            # 新的，去重
+                            indexs.add(one['id'])
+                            results.append(one)
+                for i in range(pastlen+1,len(keywordslist)):
+                    sql = "select * from course where name=%s"
+                    cursor.execute(sql, (keywordslist[i], keywordslist[i]))
+                    result = cursor.fetchall()
+                    for one in result:
+                        # results[one['id']]=one
+                        if one['id'] not in indexs:
+                            # 新的，去重
+                            indexs.add(one['id'])
+                            results.append(one)
+                for i in range(pastlen+1,len(keywordslist)):
+                    sql = "select * from course where intro like '%"+keywordslist[i]+"%'"
+                    cursor.execute(sql)
+                    result = cursor.fetchall()
+                    for one in result:
+                        # results[one['id']]=one
+                        if one['id'] not in indexs:
+                            # 新的，去重
+                            indexs.add(one['id'])
+                            results.append(one)
+        finally:
+            connection.close()
+        
+        return results
+
+    def classify(self, classifyargs):
+        '''
+        classifyargs类型为classifyArgs，用于传分类的参数，各个参数为字符串，传递分类的标准，不需要某类分类则置None。
+        '''
+        sql = "select * from Activity where"
+        first = True
+        
+        # if classifyargs.campus != None:
+        #     if not first:
+        #         sql+=" and"
+        #     sql += ' campus=' + classifyargs.campus
+        # elif classifyargs.time != None:
+        #     if not first:
+        #         sql+=" and"
+        #     sql += ' time=' + classifyargs.time
+        # elif classifyargs.college != None:
+        #     if not first:
+        #         sql+=" and"
+        #     sql += ' college=' + classifyargs.college
+
+        connection = pymysql.connect(host='129.204.75.9', user='root', password='mysql123456', db='cousrse', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(sql)
+                result = cursor.fetchall()
+        finally:
+            connection.close()
+        
+        return result
+
+class classifyArgs():
+    # campus = None
+    time = None
+    # college = None
