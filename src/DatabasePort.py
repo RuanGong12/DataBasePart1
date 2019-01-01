@@ -2,6 +2,7 @@
 import pymysql
 import synonyms
 import time
+import random
 
 _host = "129.204.75.9"
 _port = 3306
@@ -270,8 +271,10 @@ class DatabasePort(object):
 
     def search(self,keywords, fuzzy):
         '''
+        课程的搜索
         keywords为字符串，包含若干关键词，以空格分隔；
         fuzzy为bool，代表是否进行模糊搜索
+        返回一个列表
         '''
         keywordslist = keywords.split()
         pastlen = len(keywordslist)
@@ -286,7 +289,7 @@ class DatabasePort(object):
         try:
             with connection.cursor() as cursor:
                 for i in range(pastlen):
-                    sql = "select * from course where name=%s or teacher=%s"
+                    sql = "select * from Activity where type = 0 and name=%s or teacher=%s"
                     cursor.execute(sql, (keywordslist[i], keywordslist[i]))
                     result = cursor.fetchall()
                     for one in result:
@@ -296,7 +299,7 @@ class DatabasePort(object):
                             indexs.add(one['id'])
                             results.append(one)
                 for i in range(pastlen):
-                    sql = "select * from course where intro like '%"+keywordslist[i]+"%'"
+                    sql = "select * from Activity where type = 0 and introdution like '%"+keywordslist[i]+"%'"
                     cursor.execute(sql)
                     result = cursor.fetchall()
                     for one in result:
@@ -306,7 +309,7 @@ class DatabasePort(object):
                             indexs.add(one['id'])
                             results.append(one)
                 for i in range(pastlen+1,len(keywordslist)):
-                    sql = "select * from course where name=%s"
+                    sql = "select * from Activity where type = 0 and name=%s"
                     cursor.execute(sql, (keywordslist[i], keywordslist[i]))
                     result = cursor.fetchall()
                     for one in result:
@@ -316,7 +319,7 @@ class DatabasePort(object):
                             indexs.add(one['id'])
                             results.append(one)
                 for i in range(pastlen+1,len(keywordslist)):
-                    sql = "select * from course where intro like '%"+keywordslist[i]+"%'"
+                    sql = "select * from Activity where type = 0 and introdution like '%"+keywordslist[i]+"%'"
                     cursor.execute(sql)
                     result = cursor.fetchall()
                     for one in result:
@@ -333,19 +336,35 @@ class DatabasePort(object):
     def classify(self, classifyargs):
         '''
         classifyargs类型为classifyArgs，用于传分类的参数，各个参数为字符串，传递分类的标准，不需要某类分类则置None。
+        classifyargs.lecturetime int类型:0-全部，1-近三天，2-近一周，3-近两周
+        classifyargs.activitytype int类型：0课程，1讲座
         classifyArgs类记得检查是否import了，这是自己定义的数据结构
+        返回一个列表
         '''
-        sql = "select * from Activity where"
+        sql = "select * from Activity where type = "+classifyargs.activitytype
         first = True
         
         if classifyargs.school != None:
             if not first:
                 sql+=" and"
             sql += ' school=' + classifyargs.school
-        elif classifyargs.time != None:
-            if not first:
-                sql+=" and"
-            sql += ' time=' + classifyargs.time
+        # elif classifyargs.time != None:
+        #     if not first:
+        #         sql+=" and"
+        #     sql += ' time=' + classifyargs.time
+        elif classifyargs.lecturetime != 0:
+            if classifyargs.lecturetime == 1:
+                if not first:
+                    sql+=" and"
+                sql += ' date between (SELECT DATE_SUB(CURDATE(),INTERVAL 3 DAY)) and (SELECT CURDATE())'
+            if classifyargs.lecturetime == 2:
+                if not first:
+                    sql+=" and"
+                sql += ' date between (SELECT DATE_SUB(CURDATE(),INTERVAL 1 WEEK)) and (SELECT CURDATE())'
+            if classifyargs.lecturetime == 3:
+                if not first:
+                    sql+=" and"
+                sql += ' date between (SELECT DATE_SUB(CURDATE(),INTERVAL 2 WEEK)) and (SELECT CURDATE())'
         elif classifyargs.level != None:
             if not first:
                 sql+=" and"
@@ -362,8 +381,40 @@ class DatabasePort(object):
         
         return result
 
+    def getRandomLevelFourOrFive(self,actType):
+        '''
+        actLevel int类型，0课程，1时间
+        返回一个列表，容量10个
+        '''
+        connection = pymysql.connect(host=_host, user=_sql_user, password=_sql_password, db=_database, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor,port=_port)
+
+        results=[]
+        sql="select * from Activity where level in (4,5) and type = "+actType
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(sql)
+                results = cursor.fetchall()
+        finally:
+            connection.close()
+        
+        randIndex = set()
+        resultsLen = len(results)
+        while len(randIndex)<10:
+            randIndex.add(random.randint(0, resultsLen - 1))
+
+        returns = []
+        for index in randIndex:
+            returns.append(results[index])
+
+        return returns
+        
+        
+
+
+
 class classifyArgs():
     # campus = None
-    time = None
+    lecturetime = 0
     school = None
-    level=None
+    level = None
+    activitytype =0
